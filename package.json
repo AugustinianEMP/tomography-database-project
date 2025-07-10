@@ -1,12 +1,17 @@
 {
-  "name": "tomography-database-project",
+  "name": "uchicago-tomography-database",
   "version": "1.0.0",
+  "description": "University of Chicago Tomography Database - Advanced electron tomography datasets for research",
+  "keywords": ["electron-tomography", "structural-biology", "university-of-chicago", "cryo-et", "database"],
+  "author": "August Angulo",
+  "license": "MIT",
   "private": true,
   "dependencies": {
     "firebase": "^11.10.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -32,7 +37,10 @@
       "last 1 safari version"
     ]
   },
-  "author": "August Angulo",
-  "license": "ISC",
-  "description": "A database for the Tomography project"
+  "devDependencies": {
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "jest-environment-jsdom": "^29.7.0"
+  }
 }

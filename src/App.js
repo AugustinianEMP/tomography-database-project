@@ -1,17 +1,33 @@
-import React from 'react';
-import { auth, db } from './firebase/config';
+import React, { useState } from 'react';
 import './App.css';
+import DatasetBrowser from './components/DatasetBrowser';
+import DatasetDetail from './components/DatasetDetail';
+import { mockTomograms } from './data/mockTomograms';
 
 function App() {
+  const [selectedDataset, setSelectedDataset] = useState(null);
+
+  const handleDatasetClick = (tomogram) => {
+    setSelectedDataset(tomogram);
+  };
+
+  const handleBackClick = () => {
+    setSelectedDataset(null);
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <h1>Tomography Database Project</h1>
-        <p>Firebase is configured and ready to use!</p>
-        <p>
-          Edit <code>src/App.js</code> to start building your application.
-        </p>
-      </header>
+      {selectedDataset ? (
+        <DatasetDetail 
+          tomogram={selectedDataset} 
+          onBackClick={handleBackClick}
+        />
+      ) : (
+        <DatasetBrowser 
+          tomograms={mockTomograms} 
+          onDatasetClick={handleDatasetClick}
+        />
+      )}
     </div>
   );
 }
