@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 const DatasetDetail = ({ tomogram, onBackClick }) => {
   const [imageErrors, setImageErrors] = useState({});
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedAdditionalView, setSelectedAdditionalView] = useState(null); // Track which additional view is selected
 
   // Add swipe gesture support for macOS trackpad
   useEffect(() => {
@@ -80,6 +81,17 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
     setImageErrors(prev => ({ ...prev, [imageType]: true }));
   };
 
+  // Handle additional view thumbnail click
+  const handleAdditionalViewClick = (index) => {
+    if (selectedAdditionalView === index) {
+      // If clicking the same thumbnail, deselect it (go back to main image/video)
+      setSelectedAdditionalView(null);
+    } else {
+      // Select new additional view
+      setSelectedAdditionalView(index);
+    }
+  };
+
   if (!tomogram) {
     return <div>Dataset not found</div>;
   }
@@ -97,7 +109,11 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
     return typeMap[extension] || extension.toUpperCase();
   };
 
-  const currentGalleryImage = tomogram.imageGallery && tomogram.imageGallery[selectedImage];
+  // Determine what to show in the main image area
+  const showingAdditionalView = selectedAdditionalView !== null;
+  const currentAdditionalImage = showingAdditionalView && tomogram.imageGallery 
+    ? tomogram.imageGallery[selectedAdditionalView] 
+    : null;
 
   return (
     <div className="dataset-detail">
@@ -124,41 +140,59 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
         <div className="detail-layout">
           {/* Left side - Video/Image */}
           <div className="detail-media">
-            {tomogram.videoUrl && !imageErrors.video ? (
-              <div className="video-container">
-                <video 
-                  controls 
-                  poster={tomogram.detailImageUrl}
-                  className="tomogram-video"
-                  onError={() => handleImageError('video')}
-                >
-                  <source src={tomogram.videoUrl} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-                <div className="video-info">
-                  <span>Tomogram Reconstruction Video</span>
-                  <span className="video-progress">Auto-play enabled</span>
+            {showingAdditionalView ? (
+              // Show selected additional view in main area
+              <div className="image-container">
+                <img 
+                  src={currentAdditionalImage} 
+                  alt={`Additional view ${selectedAdditionalView + 1}`}
+                  className="detail-image"
+                  onError={() => handleImageError(`gallery_${selectedAdditionalView}`)}
+                />
+                <div className="view-label">
+                  {getViewLabel(selectedAdditionalView)}
                 </div>
               </div>
             ) : (
-              <div className="image-container">
-                {tomogram.detailImageUrl && !imageErrors.detail ? (
-                  <img 
-                    src={tomogram.detailImageUrl} 
-                    alt={tomogram.title}
-                    className="detail-image"
-                    onError={() => handleImageError('detail')}
-                  />
+              // Show main video or image
+              <>
+                {tomogram.videoUrl && !imageErrors.video ? (
+                  <div className="video-container">
+                    <video 
+                      controls 
+                      poster={tomogram.detailImageUrl}
+                      className="tomogram-video"
+                      onError={() => handleImageError('video')}
+                    >
+                      <source src={tomogram.videoUrl} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                    <div className="video-info">
+                      <span>Tomogram Reconstruction Video</span>
+                      <span className="video-progress">Auto-play enabled</span>
+                    </div>
+                  </div>
                 ) : (
-                  <div className="placeholder-media">
-                    <span>Tomogram Image</span>
-                    <p>ID: {tomogram.tomogramId}</p>
+                  <div className="image-container">
+                    {tomogram.detailImageUrl && !imageErrors.detail ? (
+                      <img 
+                        src={tomogram.detailImageUrl} 
+                        alt={tomogram.title}
+                        className="detail-image"
+                        onError={() => handleImageError('detail')}
+                      />
+                    ) : (
+                      <div className="placeholder-media">
+                        <span>Tomogram Image</span>
+                        <p>ID: {tomogram.tomogramId}</p>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
+              </>
             )}
             
-            {/* Image Gallery */}
+            {/* Additional Views - Only thumbnails */}
             {tomogram.imageGallery && tomogram.imageGallery.length > 0 && (
               <div className="image-gallery">
                 <h4>Additional Views</h4>
@@ -166,25 +200,23 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
                   {tomogram.imageGallery.map((imageUrl, index) => (
                     <div 
                       key={index}
-                      className={`gallery-thumb ${selectedImage === index ? 'active' : ''}`}
-                      onClick={() => setSelectedImage(index)}
+                      className={`gallery-thumb ${selectedAdditionalView === index ? 'active' : ''}`}
+                      onClick={() => handleAdditionalViewClick(index)}
+                      title={`Click to view ${getViewLabel(index)}`}
                     >
                       <img 
                         src={imageUrl} 
                         alt={`View ${index + 1}`}
                         onError={() => handleImageError(`gallery_${index}`)}
                       />
+                      <div className="thumb-label">{getViewLabel(index)}</div>
                     </div>
                   ))}
                 </div>
-                {currentGalleryImage && !imageErrors[`gallery_${selectedImage}`] && (
-                  <div className="gallery-main">
-                    <img 
-                      src={currentGalleryImage} 
-                      alt={`Selected view ${selectedImage + 1}`}
-                      className="gallery-main-image"
-                    />
-                  </div>
+                {showingAdditionalView && (
+                  <p className="view-instruction">
+                    Click thumbnails to switch between views. Click active thumbnail to return to main view.
+                  </p>
                 )}
               </div>
             )}
@@ -284,6 +316,12 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
       </main>
     </div>
   );
+
+  // Helper function to get view labels
+  function getViewLabel(index) {
+    const labels = ['Slice 1', 'Slice 2', '3D View', 'Surface View', 'Cross Section'];
+    return labels[index] || `View ${index + 1}`;
+  }
 };
 
 export default DatasetDetail; 

@@ -78,7 +78,7 @@ describe('DatasetBrowser Component', () => {
     
     // Should show real images
     const images = screen.getAllByRole('img');
-    expect(images).toHaveLength(3); // One for each tomogram
+    expect(images).toHaveLength(11); // One for each tomogram (11 total now)
     
     // Check that images have correct src URLs
     expect(images[0]).toHaveAttribute('src', '/images/tomograms/UCTD_001_thumb.jpg');
@@ -151,9 +151,10 @@ describe('DatasetBrowser Component', () => {
   test('displays file count information', () => {
     render(<DatasetBrowser tomograms={mockTomograms} onDatasetClick={mockOnDatasetClick} />);
     
-    // Should show file counts for each dataset - check actual values from rendered output
-    expect(screen.getAllByText('4 files')).toHaveLength(2); // UCTD_001 and UCTD_002 have 4 files
-    expect(screen.getByText('3 files')).toBeInTheDocument(); // UCTD_003 has 3 files
+    // Should show file counts for each dataset - based on actual counts
+    expect(screen.getAllByText('4 files')).toHaveLength(9); // 9 datasets have 4 files
+    expect(screen.getAllByText('3 files')).toHaveLength(1); // UCTD_003 has 3 files
+    expect(screen.getAllByText('5 files')).toHaveLength(1); // UCTD_010 has 5 files
   });
 
   // Test 3: Integration with search interface
@@ -167,6 +168,7 @@ describe('DatasetBrowser Component', () => {
     expect(screen.getAllByText('Vibrio cholerae')).toHaveLength(1); // only in card
     expect(screen.getAllByText('Caulobacter crescentus')).toHaveLength(1); // only in card  
     expect(screen.getAllByText('Methanocaldococcus jannaschii')).toHaveLength(1); // only in card
+    expect(screen.getAllByText('Escherichia coli')).toHaveLength(1); // new dataset
     
     // Should have toggle button for filters
     expect(screen.getByText(/advanced filters/i)).toBeInTheDocument();

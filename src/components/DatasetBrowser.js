@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import SearchInterface from './SearchInterface';
 
-const DatasetBrowser = ({ tomograms, loading, onDatasetClick }) => {
+const DatasetBrowser = ({ tomograms, loading, onDatasetClick, onAddDatasetClick }) => {
   const [filters, setFilters] = useState({
     searchText: '',
     species: '',
@@ -96,7 +96,15 @@ const DatasetBrowser = ({ tomograms, loading, onDatasetClick }) => {
           <nav className="main-nav">
             <span>About</span>
             <span className="active">Browse Database</span>
-            <span>Upload</span>
+            <span 
+              className="add-dataset-btn"
+              onClick={onAddDatasetClick}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && onAddDatasetClick()}
+            >
+              + Add Dataset
+            </span>
             <span>Contact</span>
           </nav>
         </div>
