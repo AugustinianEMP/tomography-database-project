@@ -38,6 +38,9 @@ pids
 *.swp
 *.swo
 
+# Cursor AI rules (keep development standards private)
+.cursor/
+
 # OS generated files
 .DS_Store
 .DS_Store?
