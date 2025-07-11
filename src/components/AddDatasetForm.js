@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { generateNextTomogramId, createTomogramObject } from '../utils/datasetUtils';
+import { useSwipeExit } from '../utils/swipeExitHelper';
 
 const AddDatasetForm = ({ tomograms, onAddDataset, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -30,6 +31,9 @@ const AddDatasetForm = ({ tomograms, onAddDataset, onCancel }) => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Add swipe exit functionality with auto-save
+  useSwipeExit(onCancel, true, formData);
 
   // Handle input changes
   const handleInputChange = (e) => {
