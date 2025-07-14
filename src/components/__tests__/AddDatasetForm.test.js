@@ -28,6 +28,11 @@ jest.mock('../../utils/datasetUtils', () => ({
   }))
 }));
 
+// Mock the swipe exit helper
+jest.mock('../../utils/swipeExitHelper', () => ({
+  useSwipeExit: jest.fn()
+}));
+
 const mockTomograms = [
   { tomogramId: 'UCTD_001', title: 'Test 1' },
   { tomogramId: 'UCTD_002', title: 'Test 2' },
@@ -261,6 +266,35 @@ describe('AddDatasetForm', () => {
   });
 
   describe('Form Submission', () => {
+    beforeEach(() => {
+      // Reset call history but keep implementations
+      defaultProps.onAddDataset.mockClear();
+      defaultProps.onCancel.mockClear();
+      
+      // Restore the mock implementations
+      const { generateNextTomogramId, createTomogramObject } = require('../../utils/datasetUtils');
+      generateNextTomogramId.mockReturnValue('UCTD_004');
+      createTomogramObject.mockImplementation((formData, id) => ({
+        tomogramId: id,
+        title: formData.title,
+        description: formData.description,
+        species: formData.species,
+        strain: formData.strain,
+        cellType: formData.cellType || 'Bacterial cell',
+        microscopeType: formData.microscopeType || 'FEI Polara 300kV',
+        fileTypes: formData.fileTypes || ['.mrc', '.rec', '.mod', '.tif'],
+        thumbnailUrl: `/images/tomograms/${id}_thumb.jpg`,
+        cellularFeatures: formData.cellularFeatures ? formData.cellularFeatures.split(',').map(f => f.trim()) : [],
+        acceleratingVoltage: parseInt(formData.acceleratingVoltage) || 300,
+        magnification: parseInt(formData.magnification) || 30000,
+        pixelSize: parseFloat(formData.pixelSize) || 0.68,
+        datasetSize: formData.datasetSize || '2.0 GB',
+        authors: formData.authors ? formData.authors.split(',').map(a => a.trim()) : ['University of Chicago'],
+        publicationDate: formData.publicationDate || new Date().toISOString().split('T')[0],
+        lab: formData.lab || 'UChicago Research Laboratory'
+      }));
+    });
+
     test('should submit valid form successfully', async () => {
       const user = userEvent.setup();
       defaultProps.onAddDataset.mockResolvedValue();
@@ -395,6 +429,178 @@ describe('AddDatasetForm', () => {
 
       expect(submitButton).toHaveAttribute('type', 'submit');
       expect(cancelButton).toHaveAttribute('type', 'button');
+    });
+  });
+
+  describe('Auto-save functionality', () => {
+    beforeEach(() => {
+      // Clear localStorage before each test
+      localStorage.clear();
+      // Mock console.log to avoid cluttering test output
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      localStorage.clear();
+      jest.restoreAllMocks();
+    });
+
+    test('should recover saved form data from localStorage on mount', async () => {
+      const savedFormData = {
+        title: 'Saved Dataset Title',
+        description: 'Saved description',
+        species: 'Saved Species',
+        strain: 'Saved Strain',
+        cellType: 'Bacterial cell',
+        microscopeType: 'FEI Polara 300kV',
+        acceleratingVoltage: 300,
+        magnification: 30000,
+        pixelSize: 0.68,
+        tiltRange: '-60° to +60°',
+        preparationMethod: 'Cryo-fixation',
+        contrastMethod: 'Vitreous ice',
+        fiducialType: '10nm gold beads',
+        reconstructionSoftware: 'IMOD',
+        binning: 4,
+        reconstruction: 'weighted back-projection',
+        alignment: 'fiducial-based',
+        datasetSize: '2.5 GB',
+        fileTypes: ['.mrc', '.rec'],
+        authors: 'Test Author',
+        publicationDate: '2024-01-15',
+        lab: 'Test Lab',
+        cellularFeatures: 'test features'
+      };
+
+      // Pre-populate localStorage with saved data
+      localStorage.setItem('addDatasetFormDraft', JSON.stringify(savedFormData));
+
+      render(<AddDatasetForm {...defaultProps} />);
+
+      // Wait for the useEffect to run and recover data
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('Saved Dataset Title')).toBeInTheDocument();
+      });
+
+      expect(screen.getByDisplayValue('Saved description')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Saved Species')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Saved Strain')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('2.5 GB')).toBeInTheDocument();
+
+      // Verify localStorage was cleared after recovery
+      expect(localStorage.getItem('addDatasetFormDraft')).toBeNull();
+      expect(console.log).toHaveBeenCalledWith('Recovered saved form data');
+    });
+
+    test('should handle corrupted localStorage data gracefully', async () => {
+      // Set invalid JSON in localStorage
+      localStorage.setItem('addDatasetFormDraft', 'invalid json data');
+
+      render(<AddDatasetForm {...defaultProps} />);
+
+      // Should not crash and should clear the corrupted data
+      await waitFor(() => {
+        expect(localStorage.getItem('addDatasetFormDraft')).toBeNull();
+      });
+
+      expect(console.error).toHaveBeenCalledWith(
+        'Error recovering saved form data:',
+        expect.any(Error)
+      );
+
+      // Form should render normally with default values
+      expect(screen.getByLabelText(/title/i)).toHaveValue(''); // Title field should be empty
+    });
+
+    test('should not recover data if localStorage is empty', () => {
+      render(<AddDatasetForm {...defaultProps} />);
+
+      // All form fields should have their default values
+      const titleInput = screen.getByLabelText(/title/i);
+      const descriptionTextarea = screen.getByLabelText(/description/i);
+      
+      expect(titleInput.value).toBe('');
+      expect(descriptionTextarea.value).toBe('');
+      expect(localStorage.getItem('addDatasetFormDraft')).toBeNull();
+    });
+
+    test('should save form data when swipe exit is triggered', async () => {
+      const user = userEvent.setup();
+      const { useSwipeExit } = require('../../utils/swipeExitHelper');
+
+      render(<AddDatasetForm {...defaultProps} />);
+
+      // Fill in some form data
+      await user.type(screen.getByLabelText(/title/i), 'Test Dataset');
+      await user.type(screen.getByLabelText(/description/i), 'Test description');
+      await user.type(screen.getByLabelText(/species/i), 'Test Species');
+
+      // Verify useSwipeExit was called with the right parameters
+      expect(useSwipeExit).toHaveBeenCalledWith(
+        defaultProps.onCancel,
+        true,
+        expect.objectContaining({
+          title: 'Test Dataset',
+          description: 'Test description',
+          species: 'Test Species'
+        })
+      );
+
+      // Simulate the swipe exit by calling onCancel directly (since hook is mocked)
+      const onCancelCallback = useSwipeExit.mock.calls[0][0];
+      onCancelCallback();
+
+      // Verify onCancel was called
+      expect(defaultProps.onCancel).toHaveBeenCalled();
+    });
+
+    test('should preserve form state between mounts with auto-save', async () => {
+      const user = userEvent.setup();
+
+      // First render - fill in data
+      const { unmount } = render(<AddDatasetForm {...defaultProps} />);
+
+      await user.type(screen.getByLabelText(/title/i), 'Persistent Dataset');
+      await user.type(screen.getByLabelText(/species/i), 'Persistent Species');
+
+      // Manually save to localStorage (simulating swipe exit)
+      const formData = {
+        title: 'Persistent Dataset',
+        description: '',
+        species: 'Persistent Species',
+        cellType: 'Bacterial cell',
+        strain: '',
+        microscopeType: 'FEI Polara 300kV',
+        acceleratingVoltage: 300,
+        magnification: 30000,
+        pixelSize: 0.68,
+        tiltRange: '-60° to +60°',
+        preparationMethod: 'Cryo-fixation',
+        contrastMethod: 'Vitreous ice',
+        fiducialType: '10nm gold beads',
+        reconstructionSoftware: 'IMOD',
+        binning: 4,
+        reconstruction: 'weighted back-projection',
+        alignment: 'fiducial-based',
+        datasetSize: '',
+        fileTypes: ['.mrc', '.rec', '.mod', '.tif'],
+        authors: '',
+        publicationDate: new Date().toISOString().split('T')[0],
+        lab: 'UChicago Research Laboratory',
+        cellularFeatures: ''
+      };
+      localStorage.setItem('addDatasetFormDraft', JSON.stringify(formData));
+
+      unmount();
+
+      // Second render - should recover the data
+      render(<AddDatasetForm {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('Persistent Dataset')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('Persistent Species')).toBeInTheDocument();
+      });
     });
   });
 }); 

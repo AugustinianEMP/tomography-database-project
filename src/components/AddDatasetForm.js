@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generateNextTomogramId, createTomogramObject } from '../utils/datasetUtils';
 import { useSwipeExit } from '../utils/swipeExitHelper';
 
@@ -34,6 +34,23 @@ const AddDatasetForm = ({ tomograms, onAddDataset, onCancel }) => {
 
   // Add swipe exit functionality with auto-save
   useSwipeExit(onCancel, true, formData);
+
+  // Recovery logic for saved form data
+  useEffect(() => {
+    const savedData = localStorage.getItem('addDatasetFormDraft');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        setFormData(parsedData);
+        // Clear the saved data after recovery
+        localStorage.removeItem('addDatasetFormDraft');
+        console.log('Recovered saved form data');
+      } catch (error) {
+        console.error('Error recovering saved form data:', error);
+        localStorage.removeItem('addDatasetFormDraft');
+      }
+    }
+  }, []);
 
   // Handle input changes
   const handleInputChange = (e) => {
