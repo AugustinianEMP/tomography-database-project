@@ -1,16 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import DatasetBrowser from './components/DatasetBrowser';
 import DatasetDetail from './components/DatasetDetail';
 import AddDatasetForm from './components/AddDatasetForm';
-import { mockTomograms } from './data/mockTomograms';
-import { generatePlaceholderImageCommand } from './utils/datasetUtils';
+import { fetchDatasets, generatePlaceholderImageCommand } from './utils/datasetUtils';
 
 function App() {
   // State management for datasets and navigation
-  const [tomograms, setTomograms] = useState(mockTomograms);
+  const [tomograms, setTomograms] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedDataset, setSelectedDataset] = useState(null);
-  const [currentView, setCurrentView] = useState('browse'); // 'browse', 'add', 'detail'
+  const [currentView, setCurrentView] = useState('browse');
+
+  // Load datasets from Supabase on component mount
+  useEffect(() => {
+    loadDatasets();
+  }, []);
+
+  const loadDatasets = async () => {
+    try {
+      setLoading(true);
+      const datasets = await fetchDatasets();
+      setTomograms(datasets);
+    } catch (error) {
+      console.error('Error loading datasets:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handle dataset selection for detail view
   const handleDatasetClick = (tomogram) => {
@@ -29,14 +46,15 @@ function App() {
     setCurrentView('add');
   };
 
-  // Handle adding a new dataset
+  // Handle adding a new dataset (refreshes data from Supabase)
   const handleAddDataset = async (newTomogram) => {
     try {
-      // Add the new tomogram to the list
-      setTomograms(prevTomograms => [...prevTomograms, newTomogram]);
+      // The dataset is already saved to Supabase by AddDatasetForm
+      // Refresh the entire dataset list to ensure consistency
+      await loadDatasets();
       
-      // Generate placeholder image command (in real app, this would be handled by backend)
-      const imageCommand = generatePlaceholderImageCommand(newTomogram.tomogramId);
+      // Generate placeholder image command (for future NAS integration)
+      const imageCommand = generatePlaceholderImageCommand(newTomogram.tomogram_id);
       console.log('To generate placeholder image, run:', imageCommand);
       
       // Navigate back to browse view
@@ -44,7 +62,7 @@ function App() {
       
       return Promise.resolve();
     } catch (error) {
-      console.error('Error adding dataset:', error);
+      console.error('Error in handleAddDataset:', error);
       return Promise.reject(error);
     }
   };
@@ -57,10 +75,11 @@ function App() {
   // Render current view
   const renderCurrentView = () => {
     switch (currentView) {
+
+      
       case 'add':
         return (
           <AddDatasetForm
-            tomograms={tomograms}
             onAddDataset={handleAddDataset}
             onCancel={handleCancelAdd}
           />
@@ -78,7 +97,8 @@ function App() {
       default:
         return (
           <DatasetBrowser 
-            tomograms={tomograms} 
+            tomograms={tomograms}
+            loading={loading}
             onDatasetClick={handleDatasetClick}
             onAddDatasetClick={handleAddDatasetClick}
           />

@@ -1,7 +1,34 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SearchInterface from '../SearchInterface';
-import { mockTomograms } from '../../data/mockTomograms';
+
+// Mock Supabase data for testing
+const mockTomograms = [
+  {
+    tomogram_id: 'UCTD_001',
+    title: 'E. coli Ribosome Structure',
+    organism: 'Escherichia coli',
+    microscope: 'Titan Krios',
+    file_types: ['.mrc', '.rec', '.mod'],
+    created_at: '2023-01-15T00:00:00Z'
+  },
+  {
+    tomogram_id: 'UCTD_002',
+    title: 'V. cholerae Structure',
+    organism: 'Vibrio cholerae',
+    microscope: 'Polara 300',
+    file_types: ['.mrc', '.mp4', '.star'],
+    created_at: '2023-02-15T00:00:00Z'
+  },
+  {
+    tomogram_id: 'UCTD_003',
+    title: 'Test Structure',
+    organism: 'Vibrio cholerae',
+    microscope: 'Titan Krios',
+    file_types: ['.tif', '.rec'],
+    created_at: '2023-03-15T00:00:00Z'
+  }
+];
 
 describe('SearchInterface Component', () => {
   const mockOnFilterChange = jest.fn();
@@ -108,14 +135,14 @@ describe('SearchInterface Component', () => {
     
     const microscopeSelect = screen.getByLabelText(/microscope/i);
     
-    // Change microscope filter
-    fireEvent.change(microscopeSelect, { target: { value: 'FEI Polara 300kV' } });
+    // Change microscope filter to match actual data
+    fireEvent.change(microscopeSelect, { target: { value: 'Titan Krios' } });
     
     await waitFor(() => {
       expect(mockOnFilterChange).toHaveBeenCalledWith({
         searchText: '',
         species: '',
-        microscopeType: 'FEI Polara 300kV',
+        microscopeType: 'Titan Krios',
         dateRange: { start: '', end: '' },
         fileTypes: []
       });
@@ -418,16 +445,16 @@ describe('SearchInterface Component', () => {
     const speciesSelect = screen.getByLabelText(/species/i);
     const microscopeSelect = screen.getByLabelText(/microscope/i);
     
-    // Apply multiple filters
+    // Set multiple filters
     fireEvent.change(searchInput, { target: { value: 'cell' } });
     fireEvent.change(speciesSelect, { target: { value: 'Vibrio cholerae' } });
-    fireEvent.change(microscopeSelect, { target: { value: 'FEI Polara 300kV' } });
+    fireEvent.change(microscopeSelect, { target: { value: 'Polara 300' } });
     
     await waitFor(() => {
       expect(mockOnFilterChange).toHaveBeenCalledWith({
         searchText: 'cell',
         species: 'Vibrio cholerae',
-        microscopeType: 'FEI Polara 300kV',
+        microscopeType: 'Polara 300',
         dateRange: { start: '', end: '' },
         fileTypes: []
       });

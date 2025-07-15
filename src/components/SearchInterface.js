@@ -12,9 +12,9 @@ const SearchInterface = ({ tomograms, filteredCount, onFilterChange }) => {
   const filterOptions = useMemo(() => {
     if (!tomograms) return { species: [], microscopeTypes: [], fileTypes: [] };
     
-    const uniqueSpecies = [...new Set(tomograms.map(t => t.species))];
-    const uniqueMicroscopes = [...new Set(tomograms.map(t => t.microscopeType))];
-    const allFileTypes = [...new Set(tomograms.flatMap(t => t.fileTypes || []))];
+    const uniqueSpecies = [...new Set(tomograms.map(t => t.organism))];
+    const uniqueMicroscopes = [...new Set(tomograms.map(t => t.microscope))];
+    const allFileTypes = [...new Set(tomograms.flatMap(t => t.file_types || []))];
     
     return {
       species: uniqueSpecies,

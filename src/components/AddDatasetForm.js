@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { generateNextTomogramId, createTomogramObject } from '../utils/datasetUtils';
+import { generateNextTomogramId, createTomogramObject, createDataset } from '../utils/datasetUtils';
 import { useSwipeExit } from '../utils/swipeExitHelper';
 
-const AddDatasetForm = ({ tomograms, onAddDataset, onCancel }) => {
+const AddDatasetForm = ({ onAddDataset, onCancel }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -132,21 +132,36 @@ const AddDatasetForm = ({ tomograms, onAddDataset, onCancel }) => {
     }
 
     try {
-      // Generate next available ID
-      const newId = generateNextTomogramId(tomograms);
+      // Generate next available ID from Supabase
+      const newId = await generateNextTomogramId();
       
-      // Create complete tomogram object
+      // Create complete tomogram object for database
       const newTomogram = createTomogramObject(formData, newId);
       
-      // Call parent function to add the dataset
-      await onAddDataset(newTomogram);
+      // Save to Supabase database
+      const result = await createDataset(newTomogram);
       
-      // Success - form will be closed by parent component
-      console.log(`Dataset ${newId} created successfully!`);
+      if (result.success) {
+        // Success - notify parent component
+        console.log(`Dataset ${newId} created successfully in database!`);
+        
+        // Call parent function with the created dataset
+        if (onAddDataset) {
+          await onAddDataset(result.data);
+        }
+        
+        // Clear form data from localStorage if it exists
+        localStorage.removeItem('addDatasetFormDraft');
+        
+      } else {
+        throw new Error(result.error?.message || 'Failed to save dataset');
+      }
       
     } catch (error) {
       console.error('Error adding dataset:', error);
-      setErrors({ submit: 'Failed to add dataset. Please try again.' });
+      setErrors({ 
+        submit: `Failed to add dataset: ${error.message}. Please try again.` 
+      });
     } finally {
       setIsSubmitting(false);
     }

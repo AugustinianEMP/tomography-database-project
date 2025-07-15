@@ -27,6 +27,20 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
     return <div>Dataset not found</div>;
   }
 
+  // Create download URLs array from Supabase file path fields
+  const getDownloadUrls = (dataset) => {
+    const urls = [];
+    if (dataset.raw_data_path) urls.push(dataset.raw_data_path);
+    if (dataset.processed_data_path) urls.push(dataset.processed_data_path);
+    if (dataset.reconstruction_path) urls.push(dataset.reconstruction_path);
+    if (dataset.additional_files_paths && Array.isArray(dataset.additional_files_paths)) {
+      urls.push(...dataset.additional_files_paths);
+    }
+    return urls;
+  };
+
+  const downloadUrls = getDownloadUrls(tomogram);
+
   const getFileType = (url) => {
     const extension = url.split('.').pop().toLowerCase();
     const typeMap = {
@@ -62,7 +76,7 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
           <button className="back-button" onClick={onBackClick}>
             ← Return to database
           </button>
-          <h2 className="species-title">{tomogram.species}</h2>
+          <h2 className="species-title">{tomogram.organism}</h2>
         </div>
 
         <div className="detail-layout">
@@ -88,7 +102,7 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
                   <div className="video-container">
                     <video 
                       controls 
-                      poster={tomogram.detailImageUrl}
+                      poster={tomogram.detailImageUrl || tomogram.thumbnail_path}
                       className="tomogram-video"
                       onError={() => handleImageError('video')}
                     >
@@ -102,9 +116,9 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
                   </div>
                 ) : (
                   <div className="image-container">
-                    {tomogram.detailImageUrl && !imageErrors.detail ? (
+                    {(tomogram.detailImageUrl || tomogram.thumbnail_path) && !imageErrors.detail ? (
                       <img 
-                        src={tomogram.detailImageUrl} 
+                        src={tomogram.detailImageUrl || tomogram.thumbnail_path} 
                         alt={tomogram.title}
                         className="detail-image"
                         onError={() => handleImageError('detail')}
@@ -112,7 +126,7 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
                     ) : (
                       <div className="placeholder-media">
                         <span>Tomogram Image</span>
-                        <p>ID: {tomogram.tomogramId}</p>
+                        <p>ID: {tomogram.tomogram_id}</p>
                       </div>
                     )}
                   </div>
@@ -162,17 +176,17 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
             <div className="metadata-grid">
               <div className="metadata-row">
                 <span className="metadata-label">Tilt Series date:</span>
-                <span className="metadata-value">{tomogram.publicationDate}</span>
+                <span className="metadata-value">{tomogram.created_at?.split('T')[0] || 'N/A'}</span>
               </div>
               
               <div className="metadata-row">
                 <span className="metadata-label">Data Taken By:</span>
-                <span className="metadata-value">{tomogram.authors.join(', ')}</span>
+                <span className="metadata-value">{tomogram.authors}</span>
               </div>
               
               <div className="metadata-row">
                 <span className="metadata-label">Species / Specimen:</span>
-                <span className="metadata-value">{tomogram.species}</span>
+                <span className="metadata-value">{tomogram.organism}</span>
               </div>
               
               <div className="metadata-row">
@@ -183,14 +197,14 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
               <div className="metadata-row">
                 <span className="metadata-label">Tilt Series Settings:</span>
                 <span className="metadata-value">
-                  {tomogram.tiltRange}, step 1°, constant angular increment, dosage 1.8e/Å²/s, defocus: -8μm, 
-                  magnification: {tomogram.magnification}x
+                  {tomogram.tilt_series_range || 'N/A'}, step {tomogram.tilt_increment || 1}°, constant angular increment, dosage {tomogram.total_dose || 1.8}e/Å²/s, defocus: {tomogram.defocus_min || -8}μm, 
+                  magnification: {tomogram.magnification || 'N/A'}x
                 </span>
               </div>
               
               <div className="metadata-row">
                 <span className="metadata-label">Microscope:</span>
-                <span className="metadata-value">{tomogram.microscopeType}</span>
+                <span className="metadata-value">{tomogram.microscope}</span>
               </div>
               
               <div className="metadata-row">
@@ -200,7 +214,7 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
               
               <div className="metadata-row">
                 <span className="metadata-label">Processing Software Used:</span>
-                <span className="metadata-value">{tomogram.reconstructionSoftware}</span>
+                <span className="metadata-value">{tomogram.reconstruction_software}</span>
               </div>
               
               <div className="metadata-row">
@@ -222,7 +236,7 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
               <span className="col-download">Download</span>
             </div>
             
-            {tomogram.downloadUrls.map((url, index) => {
+            {downloadUrls.map((url, index) => {
               const fileName = url.split('/').pop();
               const fileSize = index === 0 ? '3.40 GB' : 
                              index === 1 ? '343.9 MB' : 

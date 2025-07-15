@@ -1,6 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import SearchInterface from './SearchInterface';
 
+// Helper function to get file count from Supabase data
+const getFileCount = (tomogram) => {
+  const paths = [
+    tomogram.raw_data_path,
+    tomogram.processed_data_path,
+    tomogram.reconstruction_path,
+    ...(tomogram.additional_files_paths || [])
+  ].filter(Boolean);
+  return paths.length;
+};
+
 const DatasetBrowser = ({ tomograms, loading, onDatasetClick, onAddDatasetClick }) => {
   const [filters, setFilters] = useState({
     searchText: '',
@@ -18,24 +29,24 @@ const DatasetBrowser = ({ tomograms, loading, onDatasetClick, onAddDatasetClick 
       // Text search
       if (filters.searchText) {
         const searchLower = filters.searchText.toLowerCase();
-        const matchesTitle = tomogram.title.toLowerCase().includes(searchLower);
-        const matchesDescription = tomogram.description.toLowerCase().includes(searchLower);
+        const matchesTitle = tomogram.title?.toLowerCase().includes(searchLower) || false;
+        const matchesDescription = tomogram.description?.toLowerCase().includes(searchLower) || false;
         if (!matchesTitle && !matchesDescription) return false;
       }
 
       // Species filter
-      if (filters.species && tomogram.species !== filters.species) {
+      if (filters.species && tomogram.organism !== filters.species) {
         return false;
       }
 
       // Microscope type filter
-      if (filters.microscopeType && tomogram.microscopeType !== filters.microscopeType) {
+      if (filters.microscopeType && tomogram.microscope !== filters.microscopeType) {
         return false;
       }
 
-      // Date range filter - only apply if dates are valid and complete
-      if (filters.dateRange.start || filters.dateRange.end) {
-        const tomogramDate = new Date(tomogram.publicationDate);
+              // Date range filter - only apply if dates are valid and complete
+        if (filters.dateRange.start || filters.dateRange.end) {
+          const tomogramDate = new Date(tomogram.created_at);
         
         // Check start date
         if (filters.dateRange.start) {
@@ -64,10 +75,10 @@ const DatasetBrowser = ({ tomograms, loading, onDatasetClick, onAddDatasetClick 
         }
       }
 
-      // File types filter
+      // Filter by file types
       if (filters.fileTypes.length > 0) {
-        const hasMatchingFileType = filters.fileTypes.some(filterType => 
-          tomogram.fileTypes && tomogram.fileTypes.includes(filterType)
+        const hasMatchingFileType = filters.fileTypes.some(filterType =>
+          tomogram.file_types && tomogram.file_types.includes(filterType)
         );
         if (!hasMatchingFileType) return false;
       }
@@ -131,7 +142,7 @@ const DatasetBrowser = ({ tomograms, loading, onDatasetClick, onAddDatasetClick 
           <div className="tomogram-grid">
             {filteredTomograms.map((tomogram) => (
               <div 
-                key={tomogram.tomogramId}
+                key={tomogram.tomogram_id}
                 className="tomogram-card"
                 onClick={() => onDatasetClick(tomogram)}
               >
@@ -145,10 +156,10 @@ const DatasetBrowser = ({ tomograms, loading, onDatasetClick, onAddDatasetClick 
                   {/* Scientific overlay */}
                   <div className="image-overlay">
                     <div className="overlay-content">
-                      <span className="dataset-id">{tomogram.tomogramId}</span>
+                      <span className="dataset-id">{tomogram.tomogram_id}</span>
                       <div className="image-info">
-                        <span>{tomogram.datasetSize}</span>
-                        <span>{tomogram.downloadUrls.length} files</span>
+                        <span>2.0 GB</span>
+                        <span>{getFileCount(tomogram)} files</span>
                       </div>
                     </div>
                   </div>
@@ -157,8 +168,8 @@ const DatasetBrowser = ({ tomograms, loading, onDatasetClick, onAddDatasetClick 
                 <div className="card-content">
                   <h3 className="card-title">{tomogram.title}</h3>
                   <div className="card-metadata">
-                    <p><strong>Species:</strong> {tomogram.species}</p>
-                    <p><strong>Date:</strong> {tomogram.publicationDate}</p>
+                                                            <p><strong>Species:</strong> {tomogram.organism}</p>
+                    <p><strong>Date:</strong> {tomogram.created_at?.split('T')[0]}</p>
                   </div>
                   <div className="card-arrow">→</div>
                 </div>
