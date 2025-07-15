@@ -23,8 +23,7 @@ jest.mock('../../utils/datasetUtils', () => ({
     pixelSize: parseFloat(formData.pixelSize) || 0.68,
     datasetSize: formData.datasetSize || '2.0 GB',
     authors: formData.authors ? formData.authors.split(',').map(a => a.trim()) : ['University of Chicago'],
-    publicationDate: formData.publicationDate || new Date().toISOString().split('T')[0],
-    lab: formData.lab || 'UChicago Research Laboratory'
+    publicationDate: formData.publicationDate || new Date().toISOString().split('T')[0]
   }))
 }));
 
@@ -290,8 +289,7 @@ describe('AddDatasetForm', () => {
         pixelSize: parseFloat(formData.pixelSize) || 0.68,
         datasetSize: formData.datasetSize || '2.0 GB',
         authors: formData.authors ? formData.authors.split(',').map(a => a.trim()) : ['University of Chicago'],
-        publicationDate: formData.publicationDate || new Date().toISOString().split('T')[0],
-        lab: formData.lab || 'UChicago Research Laboratory'
+        publicationDate: formData.publicationDate || new Date().toISOString().split('T')[0]
       }));
     });
 
@@ -469,7 +467,6 @@ describe('AddDatasetForm', () => {
         fileTypes: ['.mrc', '.rec'],
         authors: 'Test Author',
         publicationDate: '2024-01-15',
-        lab: 'Test Lab',
         cellularFeatures: 'test features'
       };
 
@@ -587,7 +584,6 @@ describe('AddDatasetForm', () => {
         fileTypes: ['.mrc', '.rec', '.mod', '.tif'],
         authors: '',
         publicationDate: new Date().toISOString().split('T')[0],
-        lab: 'UChicago Research Laboratory',
         cellularFeatures: ''
       };
       localStorage.setItem('addDatasetFormDraft', JSON.stringify(formData));

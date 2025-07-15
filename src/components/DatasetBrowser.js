@@ -94,7 +94,6 @@ const DatasetBrowser = ({ tomograms, loading, onDatasetClick, onAddDatasetClick 
         <div className="header-content">
           <h1>University of Chicago Tomography Database</h1>
           <nav className="main-nav">
-            <span>About</span>
             <span className="active">Browse Database</span>
             <span 
               className="add-dataset-btn"
@@ -105,7 +104,6 @@ const DatasetBrowser = ({ tomograms, loading, onDatasetClick, onAddDatasetClick 
             >
               + Add Dataset
             </span>
-            <span>Contact</span>
           </nav>
         </div>
       </header>

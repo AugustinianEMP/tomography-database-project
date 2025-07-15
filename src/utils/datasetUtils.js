@@ -107,9 +107,8 @@ export const createTomogramObject = (formData, generatedId) => {
     // Publication info
     authors: formData.authors ? formData.authors.split(',').map(a => a.trim()) : ['University of Chicago'],
     publicationDate: formData.publicationDate || currentDate,
-    lab: formData.lab || 'UChicago Research Laboratory',
     
-    // Featured content
+    // Visual elements
     cellularFeatures: formData.cellularFeatures ? formData.cellularFeatures.split(',').map(f => f.trim()) : []
   };
 };

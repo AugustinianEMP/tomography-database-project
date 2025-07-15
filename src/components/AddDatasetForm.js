@@ -25,7 +25,6 @@ const AddDatasetForm = ({ tomograms, onAddDataset, onCancel }) => {
     fileTypes: ['.mrc', '.rec', '.mod', '.tif'],
     authors: '',
     publicationDate: new Date().toISOString().split('T')[0],
-    lab: 'UChicago Research Laboratory',
     cellularFeatures: ''
   });
 
@@ -497,18 +496,6 @@ const AddDatasetForm = ({ tomograms, onAddDataset, onCancel }) => {
                 name="publicationDate"
                 value={formData.publicationDate}
                 onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="lab">Laboratory</label>
-              <input
-                type="text"
-                id="lab"
-                name="lab"
-                value={formData.lab}
-                onChange={handleInputChange}
-                placeholder="e.g., UChicago Department of Biology"
               />
             </div>
           </div>

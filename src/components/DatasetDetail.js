@@ -52,10 +52,7 @@ const DatasetDetail = ({ tomogram, onBackClick }) => {
         <div className="header-content">
           <h1>University of Chicago Tomography Database</h1>
           <nav className="main-nav">
-            <span>About</span>
             <span className="active">Browse Database</span>
-            <span>Upload</span>
-            <span>Contact</span>
           </nav>
         </div>
       </header>
