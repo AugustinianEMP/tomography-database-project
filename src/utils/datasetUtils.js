@@ -178,6 +178,20 @@ export async function createDataset(datasetData) {
 }
 
 /**
+ * Transform database data to frontend format
+ * @param {Object} dataset - Raw dataset from database
+ * @returns {Object} - Transformed dataset for frontend
+ */
+export const transformDatasetForFrontend = (dataset) => {
+  return {
+    ...dataset,
+    // Map snake_case to camelCase for frontend compatibility
+    imageGallery: dataset.image_gallery || [],
+    // Add other mappings as needed
+  };
+};
+
+/**
  * Fetch all datasets from Supabase
  * @returns {Promise<Array>} Array of datasets
  */
@@ -193,7 +207,8 @@ export async function fetchDatasets() {
       return [];
     }
 
-    return data || [];
+    // Transform data for frontend compatibility
+    return (data || []).map(transformDatasetForFrontend);
   } catch (error) {
     console.error('Error fetching datasets:', error);
     return [];
@@ -218,7 +233,8 @@ export async function fetchDatasetById(id) {
       return null;
     }
 
-    return data;
+    // Transform data for frontend compatibility
+    return transformDatasetForFrontend(data);
   } catch (error) {
     console.error('Error fetching dataset:', error);
     return null;

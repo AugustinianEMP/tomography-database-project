@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS datasets (
   cellular_component VARCHAR(300),
   molecular_function VARCHAR(300),
   biological_process VARCHAR(300),
-  keywords TEXT[], -- Array of keywords
+  keywords TEXT[] DEFAULT '{}', -- Array of keywords
   
   -- Acquisition Parameters
   microscope VARCHAR(200),
@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS datasets (
   processed_data_path VARCHAR(1000),
   thumbnail_path VARCHAR(1000),
   reconstruction_path VARCHAR(1000),
-  additional_files_paths TEXT[], -- Array of additional file paths
+  additional_files_paths TEXT[] DEFAULT '{}', -- Array of additional file paths
+  image_gallery TEXT[] DEFAULT '{}', -- Array of image URLs for additional views
   
   -- Publication Information
   publication_title VARCHAR(500),
